@@ -3,7 +3,25 @@ A distributed implementation of xfold using dataparallel and tensorpallel, optim
 
 ## Install guide
 
----
+```bash
+conda create -n daf3 python=3.12 -y
+```
+requirements: torch>=2.5.0, einops==0.8.1
+
+For Intel cpus, check `install_guide/torch_with_mpi.md` for compiling a torch with mpi
+
+For Nvidia GPUs, just pip install torch with cuda from the pip source
+```bash
+pip install torch==2.6.0 einops==0.8.1
+```
+
+
+```bash
+git submoduel sync --recursive
+git submoduel update --recursive
+```
+sync the required repositories and requirements
+
 ### AF3
 ```bash
 cd alphafold3
@@ -12,17 +30,16 @@ pip install -e .
 build data
 ```
 
----
-### Bashrc
+### Distributed xfold
+Install the distributed_xfold packages and the optimized cpp scripts.
 ```bash
-export BASE_PATH=/home/hers22/ASC25
-export ONEAPI_PATH=/home/hers22/intel/oneapi
-source $ONEAPI_PATH/setvars.sh --force
-
-export MPI_PATH=$BASE_PATH/ompi
-export UCX_PATH=$BASE_PATH/ucx
-
-export PATH=$MPI_PATH/bin:$UCX_PATH/bin:$PATH
-export LD_LIBRARY_PATH=$MPI_PATH/lib:$UCX_PATH/lib:/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-export LD_PRELOAD=$ONEAPI_PATH/compiler/latest/lib/libiomp5.so:$LD_PRELOAD
+python setup.py install
 ```
+
+### Run the scripts
+
+We have provided the example excution scripts for running the inferece pipeline
+
+check `./inference_pipeline.sh` for more details.
+
+The script split the whole inferece process into three stage: `preprocess`, `model inference`, `post process` 
