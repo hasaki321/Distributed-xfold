@@ -33,7 +33,7 @@ from xfold.nn.atom_cross_attention import (
 from distributed_xfold.nn.d_diffusion_transformer import (
     DistributeDiffusionCrossAttTransformer,
 )
-from distributed_xfold.distribute_utils import shard_linear, all_gather_into_tensor
+from distributed_xfold.distribute_utils import shard_linear, all_gather_into_tensor, init_dist_info
 
 
 class DistributeAtomCrossAttEncoder(AtomCrossAttEncoder):
@@ -59,16 +59,7 @@ class DistributeAtomCrossAttEncoder(AtomCrossAttEncoder):
         self.atom_transformer_encoder = DistributeDiffusionCrossAttTransformer(
             device_mesh, c_query=self.c_query, use_batch_infer=use_batch_infer)
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         # ============= _per_atom_conditioning =============

@@ -159,6 +159,9 @@ print("extra_compile_args = ", extra_compile_args)
 
 print(sources)
 
+print("Mak sure xfold has __init__.py")
+open('xfold/xfold/__init__.py','w+').close()
+
 setup(
     name="distributed_xfold",
     version="0.0.1",
@@ -167,8 +170,8 @@ setup(
     description="Distributed implementation of xfold",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    package_dir={"": "src", "xfold": "xfold"},
-    packages=find_packages(where="src") + ["xfold"],
+    package_dir={"": "src", "xfold": "xfold/xfold"},
+    packages=find_packages(where="src") + find_packages(where="xfold/"),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: BSD 3-Clause 'New' or 'Revised' License (BSD-3-Clause)",

@@ -8,8 +8,9 @@ export OUTPUTS_PATH=$AF3_PREFIX/final_outputs
 
 export MODEL_PATH=$AF3_PREFIX/models
 export JSON_NAME="37aa_2JO9.json"
+export JSON_NAME="740aa_4A5S.json"
 
-export EVO_INTRA_THREAD=4
+export EVO_INTRA_THREAD=52
 
 python run_inference.py \
     --intermediate_input_dir $MODEL_INPUT_PATH \
@@ -18,8 +19,8 @@ python run_inference.py \
     --model_dir $MODEL_PATH \
     --num_diffusion_samples 4 \
     --device cpu \
-    --xsmm 1 
-    # --compile 1 \
+    --compile \
+    --xsmm 
 
 python postprocess_model_output.py \
   --intermediate_input_dir $MODEL_INPUT_PATH \

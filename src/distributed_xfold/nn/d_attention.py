@@ -16,23 +16,14 @@ import torch.nn as nn
 from xfold import fastnn
 from xfold.nn.attention import MSAAttention, GridSelfAttention
 from distributed_xfold.xsmm_kernels.prototypes.GridSelfAttention import GridSelfAttentionXSMM_forward
-from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, shard_linear
+from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, shard_linear, init_dist_info
 import torch.distributed as dist
 
 
 class DistributeGridSelfAttention(GridSelfAttention):
     def __init__(self, device_mesh, c_pair: int = 128, num_head: int = 4, transpose: bool = False):
         super().__init__(c_pair, num_head, transpose)
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.q_projection = shard_linear(self.q_projection, self.rank, self.device_mesh, True)
@@ -123,16 +114,7 @@ class DistributeGridSelfAttention(GridSelfAttention):
 class DistributeMSAAttention(MSAAttention):
     def __init__(self, device_mesh, c_msa=64, c_pair=128, num_head=8):
         super().__init__(c_msa, c_pair, num_head)
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.pair_logits = shard_linear(self.pair_logits, self.rank, self.device_mesh, True)

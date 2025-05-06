@@ -22,7 +22,7 @@ from xfold.nn.template import TemplateEmbedding, SingleTemplateEmbedding
 from xfold import fastnn
 import torch.distributed as dist
 from distributed_xfold.nn import d_pairformer
-from distributed_xfold.distribute_utils import shard_linear, all_gather_into_tensor, ShardInfo
+from distributed_xfold.distribute_utils import shard_linear, all_gather_into_tensor, ShardInfo, init_dist_info
 
 from distributed_xfold.nn.template_utils import make_backbone_vectors
 
@@ -134,12 +134,7 @@ class DistributeTemplateEmbedding(TemplateEmbedding):
         self.output_linear = nn.Linear(
             self.num_channels, self.pair_channel, bias=False)
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def forward(
         self,
@@ -205,10 +200,7 @@ class DistributeSingleTemplateEmbedding(SingleTemplateEmbedding):
              for _ in range(self.template_stack_num_layer)]
         )
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.tp_shard_group = device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         # ============ construct_input ===============

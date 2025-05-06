@@ -32,7 +32,7 @@ from distributed_xfold.xsmm_kernels.prototypes.Batched_DiffusionSelfAttention im
 from distributed_xfold.xsmm_kernels.prototypes.Batched_DiffusionCrossAttention import BatchedCrossAttentionXSMM_forward
 
 import torch.distributed as dist
-from distributed_xfold.distribute_utils import shard_linear
+from distributed_xfold.distribute_utils import shard_linear, init_dist_info
 
 class AdaptiveLayerNorm(nn.Module):
     def __init__(self,
@@ -87,12 +87,7 @@ class DistributeAdaLNZero(AdaLNZero):
                  shard_out:bool = False) -> None:
         super().__init__(c_in,c_out,c_single_cond,use_single_cond)
         self.shard_out = shard_out
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.tp_size = self.device_mesh.tp_size
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
         self.tpp_transition2 = None 
 
@@ -139,8 +134,7 @@ class DistributeDiffusionTransition(DiffusionTransition):
             self.use_single_cond,
             shard_out = False
         )
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.transition1 = shard_linear(self.transition1, self.rank, self.device_mesh, True)
@@ -167,12 +161,7 @@ class DistributeSelfAttention(SelfAttention):
         
         self.use_batch_infer = use_batch_infer
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.tp_size = self.device_mesh.tp_size
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.q_projection = shard_linear(self.q_projection, self.rank, self.device_mesh, True)
@@ -296,10 +285,7 @@ class DistributeDiffusionTransformer(DiffusionTransformer):
             [DistributeDiffusionTransition(device_mesh, self.c_act, self.c_single_cond, use_single_cond=True) for _ in range(self.num_blocks)])
         
         # =======================================
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.tp_size = self.device_mesh.tp_size
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.pair_logits_projection = nn.ModuleList([shard_linear(projection, self.rank, self.device_mesh, True) \
@@ -341,10 +327,7 @@ class DistrubuteCrossAttention(CrossAttention):
         self.adaptive_zero_init = DistributeAdaLNZero(
             device_mesh, self.value_dim, self.value_dim, self.key_dim, use_single_cond=True, shard_out=False)
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.tp_size = self.device_mesh.tp_size
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.q_projection = shard_linear(self.q_projection, self.rank, self.device_mesh, True)
@@ -504,9 +487,7 @@ class DistributeDiffusionCrossAttTransformer(DiffusionCrossAttTransformer):
         self.transition_block = nn.ModuleList(
             [DistributeDiffusionTransition(device_mesh, c_x=self.c_query, c_single_cond=self.c_single_cond, use_single_cond=True) for _ in range(self.num_blocks)])
     
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.tp_size = self.device_mesh.tp_size
+        init_dist_info(self, device_mesh)
     
     def shard_params(self): 
         self.pair_logits_projection = shard_linear(self.pair_logits_projection, self.rank, self.device_mesh, True)

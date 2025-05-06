@@ -80,6 +80,24 @@ class DeviceMesh:
     def get_all_device(self):
         return dist.new_group(self.device_mesh.flatten().tolist())
 
+def init_dist_info(self, device_mesh):
+    self.device_mesh = device_mesh
+    self.use_tp = device_mesh.tp_size > 1
+    self.use_dp = device_mesh.dp_size > 1
+    self.dp_size = self.device_mesh.dp_size
+    self.tp_size = self.device_mesh.tp_size
+
+    if dist.is_initialized():
+        self.rank = dist.get_rank()
+        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
+        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+    else:
+        self.rank = 0
+        self.dp_shard_group = None
+        self.tp_shard_group = None
+    self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
+    self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
+
 class ShardInfo:
     def __init__(self, tensor_size, num_shard):
         self.tensor_size = tensor_size

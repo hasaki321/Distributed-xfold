@@ -15,19 +15,14 @@ import torch.nn as nn
 
 from xfold import fastnn
 from xfold.nn.primitives import Transition, OuterProductMean
-from distributed_xfold.distribute_utils import shard_linear, ShardInfo, all_gather_into_tensor
+from distributed_xfold.distribute_utils import shard_linear, ShardInfo, all_gather_into_tensor, init_dist_info
 import torch.distributed as dist
 
 class DistributeTransition(Transition):
 
     def __init__(self, device_mesh, c_x: int, num_intermediate_factor: int = 4) -> None:
         super(DistributeTransition, self).__init__(c_x, num_intermediate_factor)
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.tp_size = self.device_mesh.tp_size
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.transition1 = shard_linear(self.transition1, self.rank, self.device_mesh, True)
@@ -48,16 +43,7 @@ class DistributeOuterProductMean(OuterProductMean):
     def __init__(self, device_mesh, c_msa: int = 64, num_output_channel: int = 128, num_outer_channel: int = 32) -> None:
         super(DistributeOuterProductMean, self).__init__(c_msa, num_output_channel, num_outer_channel)
         
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.right_projection = shard_linear(self.right_projection, self.rank, self.device_mesh, True)

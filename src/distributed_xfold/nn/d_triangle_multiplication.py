@@ -15,7 +15,7 @@ import torch.nn as nn
 
 from xfold import fastnn
 import torch.distributed as dist
-from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, shard_linear
+from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, shard_linear, init_dist_info
 from distributed_xfold.xsmm_kernels.prototypes.TriangleMultiplication import TriangleMultiplicationXSMM_forward
 
 
@@ -38,16 +38,7 @@ class DistributeTriangleMultiplication(nn.Module):
         if _outgoing is True:
             self.equation='cik,cjk->cij'
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         self.projection = shard_linear(self.projection, self.rank, self.device_mesh, True)

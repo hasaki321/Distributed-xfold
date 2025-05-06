@@ -12,7 +12,7 @@ from typing import Type, Tuple, Dict, Any, Optional, Callable
 
 import torch.utils._pytree as pytree
 from alphafold3.model.components import utils
-from xfold.params import import_jax_weights_
+from xfold.params import get_alphafold3_params, get_translation_dict, _process_translations_dict, assign
 import pathlib
 import random
 import numpy as np
@@ -22,6 +22,37 @@ import time
 import os
 import argparse
 from typing import Type, Dict, Any, Optional, Callable, Union, Tuple, List
+
+def import_jax_weights_(model, model_path: pathlib.Path):
+    params = get_alphafold3_params(model_path / "af3.bin")
+
+    translations = get_translation_dict(model)
+
+    flat = _process_translations_dict(translations, _key_prefix="diffuser/")
+
+    for k in flat.keys():
+        if k not in params:
+            print(f"Key {k} not found in params")
+
+    for k in params.keys():
+        if k not in flat and k != "__meta__/__identifier__":
+            print(f"Key {k} not found in torch module")
+
+    assign(flat, params)
+
+    model.__identifier__ = params['__meta__/__identifier__']
+
+    fourier_embeddings = model.diffusion_head.fourier_embeddings
+
+    fourier_embeddings_weight = np.load(
+        open(model_path / "fourier_weight.npy", "rb"))
+    fourier_embeddings.register_buffer(
+        "weight", torch.from_numpy(fourier_embeddings_weight))
+    fourier_embeddings_bias = np.load(
+        open(model_path / "fourier_bias.npy", "rb"))
+    fourier_embeddings.register_buffer(
+        "bias", torch.from_numpy(fourier_embeddings_bias))
+
 
 class ModelRunner:
     def __init__(self,
@@ -268,7 +299,7 @@ def save_output(args_ns, sanitised_name: str, output_data: Dict[str, Any]):
     seed_val = 1
     output_filename = f'{sanitised_name}_seed_{seed_val}_raw_results.pt'
     output_path = os.path.join(output_dir, output_filename)
-    torch.save(output, os.path.join(output_dir, f'{sanitised_name}_seed_{1}_raw_results.pt'))
+    torch.save(output_data, os.path.join(output_dir, f'{sanitised_name}_seed_{1}_raw_results.pt'))
     print(f"Saving raw inference results for seed {1} to {output_path}")
 
 

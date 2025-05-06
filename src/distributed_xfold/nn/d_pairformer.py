@@ -20,7 +20,7 @@ from xfold.nn.triangle_multiplication import TriangleMultiplication
 from xfold.nn.attention import GridSelfAttention, MSAAttention
 from xfold.nn.diffusion_transformer import SelfAttention
 import torch.distributed as dist
-from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, DeviceMesh, all_to_all
+from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, DeviceMesh, all_to_all, init_dist_info
 from distributed_xfold.nn.d_triangle_multiplication import DistributeTriangleMultiplication, XSMMTriangleMultiplication
 from distributed_xfold.nn.d_attention import DistributeGridSelfAttention, DistributeMSAAttention
 from distributed_xfold.nn.d_primitives import DistributeTransition, DistributeOuterProductMean
@@ -55,8 +55,7 @@ class DistributePairformerBlock(nn.Module):
             n_heads_pair (int, optional): number of head [for TriangleAttention]. Defaults to 4.
         """
         super(DistributePairformerBlock, self).__init__()
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
+        init_dist_info(self, device_mesh)
         self.n_heads = n_heads
         self.with_single = with_single
         self.num_intermediate_factor = num_intermediate_factor
@@ -91,16 +90,7 @@ class DistributePairformerBlock(nn.Module):
                 device_mesh, c_x=c_single, num_head=n_heads, use_single_cond=False, use_batch_infer=False)
             self.single_transition = Transition(c_x=self.c_single)
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def shard_params(self): 
         if self.with_single is True:
@@ -206,16 +196,7 @@ class DistributeEvoformerBlock(nn.Module):
         )
         self.pair_transition = DistributeTransition(device_mesh, c_x=c_pair)
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     def forward(
         self,

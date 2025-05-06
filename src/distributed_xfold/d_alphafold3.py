@@ -22,7 +22,7 @@ from xfold.alphafold3 import Evoformer
 
 # from distributed_xfold.nn import atom_cross_attention_batch, diffusion_head_batch
 from distributed_xfold.nn import d_diffusion_head
-from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, shard_linear, DeviceMesh
+from distributed_xfold.distribute_utils import all_gather_into_tensor, ShardInfo, shard_linear, DeviceMesh, init_dist_info
 from distributed_xfold.nn.d_template import DistributeTemplateEmbedding
 from distributed_xfold.nn.d_pairformer import DistributeEvoformerBlock, DistributePairformerBlock
 from distributed_xfold.nn import d_atom_cross_attention
@@ -44,15 +44,7 @@ class DistributeEvoformer(Evoformer):
             [DistributePairformerBlock(device_mesh, with_single=True) for _ in range(self.pairformer_num_layer)])
 
         # =============== Distribute Informations ===================
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
     
     def shard_params(self): 
         # ========== _seq_pair_embedding ===========
@@ -300,16 +292,7 @@ class DistributeAlphaFold3(nn.Module):
             if hasattr(module, 'use_dp'):
                 module.use_dp = False
 
-        self.rank = dist.get_rank()
-        self.device_mesh = device_mesh
-        self.use_tp = device_mesh.tp_size > 1
-        self.use_dp = device_mesh.dp_size > 1
-        self.dp_size = self.device_mesh.dp_size
-        self.tp_size = self.device_mesh.tp_size
-        self.dp_shard_num = self.device_mesh.get_dp_shard_num(self.rank)
-        self.tp_shard_num = self.device_mesh.get_tp_shard_num(self.rank)
-        self.dp_shard_group = self.device_mesh.get_dp_group(self.rank)
-        self.tp_shard_group = self.device_mesh.get_tp_group(self.rank)
+        init_dist_info(self, device_mesh)
 
     # @torch.compiler.disable()
     def create_target_feat_embedding(self, batch: dict[str, torch.Tensor]) -> torch.Tensor:
