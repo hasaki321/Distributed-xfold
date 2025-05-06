@@ -1,0 +1,11 @@
+[submodule "tpp-pytorch-extension"]
+	path = tpp-pytorch-extension
+	url = https://github.com/libxsmm/tpp-pytorch-extension.git
+
+[submodule "xfold"]
+	path = xfold
+	url = https://github.com/Shenggan/xfold.git
+
+[submodule "alphafold3"]
+	path = alphafold3
+	url = https://github.com/google-deepmind/alphafold3.git

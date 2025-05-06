@@ -1,7 +1,4 @@
-# Distributed-xfold
-A distributed implementation of xfold using dataparallel and tensorpallel, optimized for Intel CPU
-
-## Install Requirements
+# Install Guide
 
 requirements:
 - ucx
@@ -11,6 +8,9 @@ requirements:
 - intel-oneapi:
     - mkl
     - mkl-dnn
+    - 
+
+
 
 ## Full process
 ---
