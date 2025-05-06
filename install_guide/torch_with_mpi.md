@@ -1,4 +1,4 @@
-# Install Guide
+### Install Requirements
 
 requirements:
 - ucx
@@ -8,23 +8,7 @@ requirements:
 - intel-oneapi:
     - mkl
     - mkl-dnn
-    - 
 
-
-
-## Full process
----
-### Miniconda
-```bash
-mkdir -p ~/miniconda3
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-
-source ~/miniconda3/bin/activate
-
-conda init --all
-```
----
 ### ENVs
 ```bash
 export BASE_PATH=/home/hers22/HRS/Alphafold3/bins
@@ -104,38 +88,20 @@ bash intel-onednn-2025.1.0.653_offline.sh
 wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd63be99-88b0-4981-bea1-2034fe17f5cf/intel-dpcpp-cpp-compiler-2025.1.0.573_offline.sh
 bash intel-dpcpp-cpp-compiler-2025.1.0.573_offline.sh
 ```
-<!-- #### oneccl
-wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/8f5d5e38-1626-41c1-9c20-44d966c43ae1/intel-oneccl-2021.15.0.401_offline.sh -->
 
----
-### AF3
-```bash
-tar -xzvf alphafold3.tar.gz
+## Torch
 
-cd alphafold3
-
-pip install rdkit==2024.3.2 absl-py==2.1.0 zstandard==0.23.0 jax==0.4.34 chex==0.1.87 jaxtyping==0.2.34 typeguard==2.13.3 dm-haiku==0.0.13
-CC=$GCC_PATH/bin/gcc CXX=$GCC_PATH/bin/g++ python setup.py install
-# pip install -e .
-build data
-```
-
----
-### Torch
 ```bash
 conda create -p ./daf3 python=3.12 -y
 conda activate ./daf3
-conda install cmake ninja -y
+conda install ninja -y && pip install -r requirements.txt && pip install cmake==3.31.6
 
 git config --global url."https://githubfast.com/".insteadof "https://github.com/"
 git clone https://github.com/pytorch/pytorch.git && cd pytorch
-git checkout -f v2.5.0
+git checkout -f v2.6.0
 
 git submodule sync --recursive
 git submodule update --init --recursive
-
-pip install -r requirements.txt
-
 
 #设置编译选项
 export CC=$GCC_PATH/bin/gcc 
@@ -172,44 +138,7 @@ export USE_OPENMP=ON
 
 python setup.py clean
 CMAKE_C_COMPILER=$(which mpicc) CMAKE_CXX_COMPILER=$(which mpicxx) python setup.py build develop
-
-pip install einops==0.8.1
 ```
----
-### Bashrc
-```bash
-# export BASE_PATH=/home/hers22/ASC25
-# export ONEAPI_PATH=/home/hers22/intel/oneapi
-# # export ONEAPI_PATH=/opt/intel
-# source $ONEAPI_PATH/setvars.sh --force
-
-# export MPI_PATH=$BASE_PATH/ompi
-# export UCX_PATH=$BASE_PATH/ucx
-# export GCC_PATH=$BASE_PATH/gcc-11
-
-# export PATH=$MPI_PATH/bin:$UCX_PATH/bin:$GCC_PATH/bin:$PATH
-# export LD_LIBRARY_PATH=$MPI_PATH/lib:$GCC_PATH/lib64:$UCX_PATH/lib:/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-# export LD_PRELOAD=$ONEAPI_PATH/compiler/latest/lib/libiomp5.so:$LD_PRELOAD
-
-export BASE_PATH=/home/hers22/ASC25
-export ONEAPI_PATH=/home/hers22/intel/oneapi
-source $ONEAPI_PATH/setvars.sh --force
-
-export MPI_PATH=$BASE_PATH/ompi
-export UCX_PATH=$BASE_PATH/ucx
-
-export PATH=$MPI_PATH/bin:$UCX_PATH/bin:$PATH
-export LD_LIBRARY_PATH=$MPI_PATH/lib:$UCX_PATH/lib:/usr/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH
-export LD_PRELOAD=$ONEAPI_PATH/compiler/latest/lib/libiomp5.so:$LD_PRELOAD
-```
-
----
-### Torch ccl
-python -m pip install torch==2.5.0 --index-url https://download.pytorch.org/whl/cpu
-python -m pip install intel-extension-for-pytorch==2.5.0 oneccl_bind_pt==2.5.0 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/cn/
-
-basekit_root=/opt/intel
-source $basekit_root/ccl/latest/env/vars.sh
 
 
 ## performance tip

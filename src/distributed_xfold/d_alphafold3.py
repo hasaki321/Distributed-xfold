@@ -441,7 +441,7 @@ class DistributeAlphaFold3(nn.Module):
         origin_intraop_threads = torch.get_num_threads()
         # torch.set_num_interop_threads(1)
 
-        evo_intra_threads = int(os.getenv('EVO_INTRA_THREAD', 12))
+        evo_intra_threads = int(os.getenv('EVO_INTRA_THREAD', origin_intraop_threads))
         torch.set_num_threads(evo_intra_threads) # 40
 
         if self.rank == 0:
