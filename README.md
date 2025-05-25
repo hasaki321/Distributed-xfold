@@ -1,5 +1,8 @@
-# Distributed-xfold
-A distributed implementation of xfold using dataparallel and tensorpallel, optimized for Intel CPU
+# 2025.5.25 NEW!
+The fastest Alphafold3 implementation on CPU from SJTU has release their [repository](https://github.com/HPC-SJTU/xfold) and [kernels](https://github.com/HPC-SJTU/af3_kernels/tree/main), the fastest can be achieve 300s for 1200 token length on 5 Intel 8558p CPU.
+
+# Distributed-xfold ( ASC25 final LZU )
+A distributed implementation of xfold using dataparallel and tensorpallel, optimized for Intel CPU.
 
 ## Install guide
 
