@@ -22,6 +22,7 @@ python run_inference.py \
     --compile \
     --xsmm 
 
+
 python postprocess_model_output.py \
   --intermediate_input_dir $MODEL_INPUT_PATH \
   --raw_results_input_dir $MODEL_OUTPUT_PATH \

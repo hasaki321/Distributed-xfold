@@ -12,6 +12,7 @@
 import torch
 import torch.nn as nn
 
+
 from xfold import feat_batch, features
 from xfold.nn import featurization
 from xfold.nn.head import DistogramHead, ConfidenceHead

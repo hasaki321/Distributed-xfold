@@ -21,6 +21,7 @@ import platform
 
 cwd = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'tpp-pytorch-extension')
 
+
 # set debug_trace_tpp = True to enable call tracing inside extension
 # export TPP_DEBUG_TRACE=0 (default) No logging (may add little overhead though)
 # export TPP_DEBUG_TRACE=1 to log TPP creation

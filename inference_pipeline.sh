@@ -13,6 +13,7 @@ export LD_LIBRARY_PATH=$MPI_PATH/lib:$GCC_PATH/lib64:$UCX_PATH/lib:$LD_LIBRARY_P
 export LD_PRELOAD=$ONEAPI_PATH/compiler/latest/lib/libiomp5.so:$LD_PRELOAD
 # export LD_PRELOAD=/home/hers22/HRS/distribute_practice/jemalloc/lib/libjemalloc.so:$LD_PRELOAD
 
+
 export PYTHON_PATH=$(which python)
 
 

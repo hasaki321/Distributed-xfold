@@ -11,6 +11,7 @@
 
 """Part 3: AlphaFold 3 Postprocessing Script."""
 
+
 import csv
 import dataclasses
 import os

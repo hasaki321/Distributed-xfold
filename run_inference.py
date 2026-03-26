@@ -23,6 +23,7 @@ import os
 import argparse
 from typing import Type, Dict, Any, Optional, Callable, Union, Tuple, List
 
+
 def import_jax_weights_(model, model_path: pathlib.Path):
     params = get_alphafold3_params(model_path / "af3.bin")
 
